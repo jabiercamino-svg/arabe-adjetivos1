@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcards Árabe – Adjetivos</title>
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #1a1a2e;
+      color: #e8e0d0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 36px 20px 48px;
+    }
+
+    h1 {
+      font-family: Arial, sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: #f0c070;
+      letter-spacing: 2px;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      font-weight: 300;
+      color: #8a8090;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 10px 28px;
+      border-radius: 30px;
+      border: 1px solid #3a3050;
+      background: transparent;
+      color: #e8e0d0;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.1s;
+    }
+
+    .btn:hover { background: #2a2045; border-color: #f0c070; color: #f0c070; }
+    .btn:active { transform: scale(0.97); }
+    .btn.active { background: #f0c070; color: #1a1a2e; border-color: #f0c070; }
+
+    .card-container {
+      perspective: 1200px;
+      width: 100%;
+      max-width: 700px;
+      height: 340px;
+      cursor: pointer;
+    }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(.4,0,.2,1);
+    }
+
+    .card.flipped { transform: rotateY(180deg); }
+
+    .side {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 36px;
+      text-align: center;
+      gap: 16px;
+    }
+
+    .front { background: #12122a; border: 1px solid #2e2850; }
+    .back  { transform: rotateY(180deg); background: #1e1840; border: 1px solid #f0c070; }
+
+    .arabic-word {
+      font-family: Arial, sans-serif;
+      font-size: 64px;
+      direction: rtl;
+      color: #f0c070;
+      line-height: 1.2;
+    }
+
+    .hint { font-size: 12px; color: #4a4060; letter-spacing: 2px; text-transform: uppercase; }
+
+    .roman {
+      font-size: 22px;
+      font-style: italic;
+      color: #a090c0;
+      font-weight: 300;
+    }
+
+    .meaning-es {
+      font-size: 28px;
+      font-weight: 700;
+      color: #e8e0d0;
+    }
+
+    .arabic-back {
+      font-family: Arial, sans-serif;
+      font-size: 36px;
+      direction: rtl;
+      color: #f0c070;
+      line-height: 1.2;
+    }
+
+    .help {
+      margin-top: 24px;
+      font-size: 11px;
+      color: #3a3050;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    @media (max-width: 500px) {
+      .arabic-word { font-size: 46px; }
+      .arabic-back { font-size: 26px; }
+      .card-container { height: 300px; }
+      h1 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>ADJETIVOS · الصفات</h1>
+  <div class="subtitle">aṣ-ṣifāt · Flashcards árabe</div>
+
+  <div class="controls">
+    <button class="btn" onclick="prevCard()">⬅ Anterior</button>
+    <button class="btn" onclick="flipCard()">🔄 Girar</button>
+    <button class="btn" onclick="nextCard()">Siguiente ➡</button>
+    <button class="btn" id="randomBtn" onclick="toggleRandom()">🔀 Aleatorio: NO</button>
+    <button class="btn" onclick="shuffleCards()">⇄ Mezclar</button>
+  </div>
+
+  <div class="card-container">
+    <div class="card" id="card" onclick="flipCard()">
+      <div class="side front" id="front"></div>
+      <div class="side back"  id="back"></div>
+    </div>
+  </div>
+
+  <div class="help">espacio = girar · ← → = navegar</div>
+
+  <script>
+    const data = [
+      { ar: 'كبير', ro: 'kabīr', es: 'grande' },
+      { ar: 'صغير', ro: 'ṣaghīr', es: 'pequeño' },
+      { ar: 'طويل', ro: 'ṭawīl', es: 'largo, alto' },
+      { ar: 'قصير', ro: 'qaṣīr', es: 'corto, bajo' },
+      { ar: 'عالي', ro: 'ʿālī', es: 'alto' },
+      { ar: 'منخفض', ro: 'munkhafiḍ', es: 'bajo' },
+      { ar: 'واسع', ro: 'wāsiʿ', es: 'amplio' },
+      { ar: 'ضيق', ro: 'ḍayyiq', es: 'estrecho' },
+      { ar: 'ثقيل', ro: 'thaqīl', es: 'pesado' },
+      { ar: 'خفيف', ro: 'khafīf', es: 'ligero' },
+      { ar: 'سريع', ro: 'sarīʿ', es: 'rápido' },
+      { ar: 'بطيء', ro: 'baṭīʾ', es: 'lento' },
+      { ar: 'قوي', ro: 'qawiyy', es: 'fuerte' },
+      { ar: 'ضعيف', ro: 'ḍaʿīf', es: 'débil' },
+      { ar: 'غني', ro: 'ghaniyy', es: 'rico' },
+      { ar: 'فقير', ro: 'faqīr', es: 'pobre' },
+      { ar: 'جميل', ro: 'jamīl', es: 'bonito' },
+      { ar: 'قبيح', ro: 'qabīḥ', es: 'feo' },
+      { ar: 'جديد', ro: 'jadīd', es: 'nuevo' },
+      { ar: 'قديم', ro: 'qadīm', es: 'viejo, antiguo' },
+      { ar: 'حديث', ro: 'ḥadīth', es: 'moderno' },
+      { ar: 'تقليدي', ro: 'taqlīdī', es: 'tradicional' },
+      { ar: 'سهل', ro: 'sahl', es: 'fácil' },
+      { ar: 'صعب', ro: 'ṣaʿb', es: 'difícil' },
+      { ar: 'بسيط', ro: 'basīṭ', es: 'simple' },
+      { ar: 'معقد', ro: 'muʿaqqad', es: 'complicado' },
+      { ar: 'ذكي', ro: 'dhakiyy', es: 'inteligente' },
+      { ar: 'غبي', ro: 'ghabiyy', es: 'tonto' },
+      { ar: 'ممتع', ro: 'mumtiʿ', es: 'divertido' },
+      { ar: 'ممل', ro: 'mumill', es: 'aburrido' },
+      { ar: 'سعيد', ro: 'saʿīd', es: 'feliz' },
+      { ar: 'حزين', ro: 'ḥazīn', es: 'triste' },
+      { ar: 'مرتاح', ro: 'murtāḥ', es: 'cómodo, relajado' },
+      { ar: 'متعب', ro: 'mutʿab', es: 'cansado' },
+      { ar: 'هادئ', ro: 'hādiʾ', es: 'tranquilo' },
+      { ar: 'عصبي', ro: 'ʿaṣabī', es: 'nervioso' },
+      { ar: 'مشغول', ro: 'mashghūl', es: 'ocupado' },
+      { ar: 'فارغ', ro: 'fārigh', es: 'vacío, libre' },
+      { ar: 'مشهور', ro: 'mashhūr', es: 'famoso' },
+      { ar: 'مجهول', ro: 'majhūl', es: 'desconocido' },
+      { ar: 'صحيح', ro: 'ṣaḥīḥ', es: 'correcto' },
+      { ar: 'خطأ', ro: 'khaṭaʾ', es: 'incorrecto' },
+      { ar: 'نظيف', ro: 'naẓīf', es: 'limpio' },
+      { ar: 'وسخ', ro: 'wasikh', es: 'sucio' },
+      { ar: 'بارد', ro: 'bārid', es: 'frío' },
+      { ar: 'حار', ro: 'ḥārr', es: 'caliente' },
+      { ar: 'دافئ', ro: 'dāfiʾ', es: 'templado' },
+      { ar: 'رطب', ro: 'raṭb', es: 'húmedo' },
+      { ar: 'جاف', ro: 'jāff', es: 'seco' },
+      { ar: 'مفتوح', ro: 'maftūḥ', es: 'abierto' },
+      { ar: 'مغلق', ro: 'mughlaq', es: 'cerrado' },
+      { ar: 'ممتلئ', ro: 'mumtaliʾ', es: 'lleno' },
+      { ar: 'فاضي', ro: 'fāḍī', es: 'vacío' },
+      { ar: 'قريب', ro: 'qarīb', es: 'cercano' },
+      { ar: 'بعيد', ro: 'baʿīd', es: 'lejano' },
+      { ar: 'غالي', ro: 'ghālī', es: 'caro' },
+      { ar: 'رخيص', ro: 'rakhīṣ', es: 'barato' },
+      { ar: 'حقيقي', ro: 'ḥaqīqī', es: 'real' },
+      { ar: 'مزيف', ro: 'muzayyaf', es: 'falso' },
+      { ar: 'مهم', ro: 'muhimm', es: 'importante' },
+      { ar: 'عادي', ro: 'ʿādī', es: 'normal' },
+      { ar: 'خاص', ro: 'khāṣṣ', es: 'especial' },
+      { ar: 'عام', ro: 'ʿāmm', es: 'general' },
+      { ar: 'لطيف', ro: 'laṭīf', es: 'amable' },
+      { ar: 'وقح', ro: 'waqiḥ', es: 'maleducado' },
+      { ar: 'كريم', ro: 'karīm', es: 'generoso' },
+      { ar: 'بخيل', ro: 'bakhīl', es: 'tacaño' },
+      { ar: 'شجاع', ro: 'shujāʿ', es: 'valiente' },
+      { ar: 'جبان', ro: 'jubān', es: 'cobarde' },
+      { ar: 'صادق', ro: 'ṣādiq', es: 'sincero' },
+      { ar: 'كاذب', ro: 'kādhib', es: 'mentiroso' },
+      { ar: 'مزعج', ro: 'muzʿij', es: 'molesto' },
+      { ar: 'واضح', ro: 'wāḍiḥ', es: 'claro' },
+      { ar: 'غامض', ro: 'ghāmiḍ', es: 'ambiguo' },
+      { ar: 'سليم', ro: 'salīm', es: 'sano' },
+      { ar: 'مريض', ro: 'marīḍ', es: 'enfermo' },
+      { ar: 'جاهز', ro: 'jāhiz', es: 'preparado' },
+      { ar: 'متأخر', ro: 'mutaʾakhkhir', es: 'retrasado' },
+      { ar: 'مبكر', ro: 'mubakkir', es: 'temprano' },
+      { ar: 'سريع الغضب', ro: 'sarīʿ al-ghaḍab', es: 'irritable' },
+      { ar: 'صبور', ro: 'ṣabūr', es: 'paciente' },
+      { ar: 'متسرع', ro: 'mutasarriʿ', es: 'impulsivo' },
+      { ar: 'محظوظ', ro: 'maḥẓūẓ', es: 'afortunado' },
+      { ar: 'منحوس', ro: 'manḥūs', es: 'desafortunado' },
+      { ar: 'مرتب', ro: 'murattab', es: 'ordenado' },
+      { ar: 'فوضوي', ro: 'fawḍawī', es: 'caótico' },
+      { ar: 'خفيف الظل', ro: 'khafīf aẓ-ẓill', es: 'gracioso' },
+      { ar: 'جاد', ro: 'jādd', es: 'serio' },
+      { ar: 'نشيط', ro: 'nashīṭ', es: 'activo' },
+      { ar: 'كسول', ro: 'kasūl', es: 'perezoso' },
+      { ar: 'مبتسم', ro: 'mubtasim', es: 'sonriente' },
+      { ar: 'غاضب', ro: 'ghāḍib', es: 'enfadado' },
+      { ar: 'جائع', ro: 'jāʾiʿ', es: 'hambriento' },
+      { ar: 'عطشان', ro: 'ʿaṭshān', es: 'sediento' },
+      { ar: 'شبعان', ro: 'shabʿān', es: 'lleno, saciado' },
+      { ar: 'خائف', ro: 'khāʾif', es: 'asustado' },
+      { ar: 'آمن', ro: 'āmin', es: 'seguro' },
+      { ar: 'خطير', ro: 'khaṭīr', es: 'peligroso' },
+      { ar: 'مفيد', ro: 'mufīd', es: 'útil' },
+      { ar: 'ضروري', ro: 'ḍarūrī', es: 'necesario' },
+      { ar: 'مستحيل', ro: 'mustaḥīl', es: 'imposible' },
+      { ar: 'ممكن', ro: 'mumkin', es: 'posible' },
+      { ar: 'طبيعي', ro: 'ṭabīʿī', es: 'natural' },
+      { ar: 'غريب', ro: 'gharīb', es: 'extraño' },
+      { ar: 'محلي', ro: 'maḥallī', es: 'local' },
+      { ar: 'أجنبي', ro: 'ajnabī', es: 'extranjero' },
+      { ar: 'شعبي', ro: 'shaʿbī', es: 'popular' },
+      { ar: 'رسمي', ro: 'rasmī', es: 'oficial' },
+      { ar: 'حر', ro: 'ḥurr', es: 'libre' },
+      { ar: 'مختلف', ro: 'mukhtalif', es: 'diferente' },
+      { ar: 'متشابه', ro: 'mutashābih', es: 'parecido' },
+      { ar: 'صامت', ro: 'ṣāmit', es: 'silencioso' },
+      { ar: 'صاخب', ro: 'ṣākhib', es: 'ruidoso' },
+      { ar: 'مشرق', ro: 'mushriq', es: 'luminoso' },
+      { ar: 'مظلم', ro: 'muẓlim', es: 'oscuro' },
+      { ar: 'حلو', ro: 'ḥilw', es: 'dulce, bonito' },
+      { ar: 'مالح', ro: 'māliḥ', es: 'salado' },
+      { ar: 'حامض', ro: 'ḥāmiḍ', es: 'ácido' },
+      { ar: 'مر', ro: 'murr', es: 'amargo' },
+      { ar: 'لذيذ', ro: 'ladhīdh', es: 'delicioso' },
+      { ar: 'سيئ', ro: 'sayyiʾ', es: 'malo' },
+      { ar: 'ممتاز', ro: 'mumtāz', es: 'excelente' },
+      { ar: 'رائع', ro: 'rāʾiʿ', es: 'maravilloso' },
+      { ar: 'مذهل', ro: 'mudhhil', es: 'increíble' },
+      { ar: 'عجيب', ro: 'ʿajīb', es: 'raro, sorprendente' },
+      { ar: 'ثمين', ro: 'thamīn', es: 'valioso' },
+      { ar: 'قديم الطراز', ro: 'qadīm aṭ-ṭirāz', es: 'anticuado' },
+      { ar: 'عصري', ro: 'ʿaṣrī', es: 'contemporáneo' },
+      { ar: 'مريح', ro: 'murīḥ', es: 'cómodo' },
+      { ar: 'قاس', ro: 'qāsī', es: 'duro, cruel' },
+      { ar: 'ناعم', ro: 'nāʿim', es: 'suave' },
+      { ar: 'حاد', ro: 'ḥādd', es: 'afilado' },
+      { ar: 'باهت', ro: 'bāhit', es: 'apagado' },
+      { ar: 'لامع', ro: 'lāmiʿ', es: 'brillante' },
+      { ar: 'مكسور', ro: 'maksūr', es: 'roto' },
+      { ar: 'متزوج', ro: 'mutazawwij', es: 'casado' },
+      { ar: 'أعزب', ro: 'aʿzab', es: 'soltero' },
+      { ar: 'مطلق', ro: 'muṭallaq', es: 'divorciado' },
+      { ar: 'أرمل', ro: 'armal', es: 'viudo' },
+      { ar: 'صغير السن', ro: 'ṣaghīr as-sinn', es: 'joven' },
+      { ar: 'عجوز', ro: 'ʿajūz', es: 'anciano' },
+      { ar: 'شاب', ro: 'shābb', es: 'joven' },
+      { ar: 'عاقل', ro: 'ʿāqil', es: 'sensato' },
+      { ar: 'مجنون', ro: 'majnūn', es: 'loco' },
+      { ar: 'متوتر', ro: 'mutawattir', es: 'estresado' },
+      { ar: 'متفائل', ro: 'mutafāʾil', es: 'optimista' },
+      { ar: 'متشائم', ro: 'mutashāʾim', es: 'pesimista' },
+      { ar: 'صحي', ro: 'ṣiḥḥī', es: 'saludable' },
+      { ar: 'غير صحي', ro: 'ghayr ṣiḥḥī', es: 'poco saludable' },
+      { ar: 'مزدحم', ro: 'muzdaḥim', es: 'congestionado' },
+      { ar: 'متوفر', ro: 'mutawaffir', es: 'disponible' },
+      { ar: 'مفقود', ro: 'mafqūd', es: 'perdido' },
+      { ar: 'مقبول', ro: 'maqbūl', es: 'aceptable' },
+      { ar: 'مرفوض', ro: 'marfūḍ', es: 'rechazado' },
+      { ar: 'ناجح', ro: 'nājiḥ', es: 'exitoso' },
+      { ar: 'فاشل', ro: 'fāshil', es: 'fracasado' },
+      { ar: 'دقيق', ro: 'daqīq', es: 'preciso' },
+      { ar: 'تقريبي', ro: 'taqrībī', es: 'aproximado' },
+      { ar: 'سري', ro: 'sirrī', es: 'secreto' },
+      { ar: 'علني', ro: 'ʿalanī', es: 'público' },
+      { ar: 'مؤقت', ro: 'muʾaqqat', es: 'temporal' },
+      { ar: 'دائم', ro: 'dāʾim', es: 'permanente' },
+      // lista extra
+      { ar: 'عريض', ro: 'ʿarīḍ', es: 'ancho' },
+      { ar: 'نحيف', ro: 'naḥīf', es: 'delgado' },
+      { ar: 'سمين', ro: 'samīn', es: 'gordo' },
+      { ar: 'ضخم', ro: 'ḍakhm', es: 'enorme' },
+      { ar: 'عملاق', ro: 'ʿimlāq', es: 'gigante' },
+      { ar: 'صغير جداً', ro: 'ṣaghīr jiddan', es: 'diminuto' },
+      { ar: 'عميق', ro: 'ʿamīq', es: 'profundo' },
+      { ar: 'سطحي', ro: 'saṭḥī', es: 'superficial' },
+      { ar: 'مستقيم', ro: 'mustaqīm', es: 'recto' },
+      { ar: 'معوج', ro: 'muʿawwaj', es: 'torcido' },
+      { ar: 'دائري', ro: 'dāʾirī', es: 'circular' },
+      { ar: 'مربع', ro: 'murabbaʿ', es: 'cuadrado' },
+      { ar: 'قذر', ro: 'qadhir', es: 'mugriento' },
+      { ar: 'أنيق', ro: 'anīq', es: 'elegante' },
+      { ar: 'فاخر', ro: 'fākhir', es: 'lujoso' },
+      { ar: 'مضحك', ro: 'muḍḥik', es: 'gracioso' },
+      { ar: 'مرهق', ro: 'murhaq', es: 'agotado' },
+      { ar: 'مكسور القلب', ro: 'maksūr al-qalb', es: 'destrozado emocionalmente' },
+      { ar: 'متسخ', ro: 'muttassikh', es: 'sucio' },
+      { ar: 'مرتفع', ro: 'murtafiʿ', es: 'elevado' },
+      { ar: 'غامق', ro: 'ghāmiq', es: 'oscuro (color)' },
+      { ar: 'فاتح', ro: 'fātiḥ', es: 'claro (color)' },
+      { ar: 'عقيم', ro: 'ʿaqīm', es: 'estéril' },
+      { ar: 'خصب', ro: 'khaṣib', es: 'fértil' },
+      { ar: 'مبلل', ro: 'muballal', es: 'mojado' },
+      { ar: 'بارع', ro: 'bāriʿ', es: 'brillante, talentoso' },
+      { ar: 'موهوب', ro: 'mawhūb', es: 'talentoso' },
+      { ar: 'عدواني', ro: 'ʿudwānī', es: 'agresivo' },
+      { ar: 'مسالم', ro: 'musālim', es: 'pacífico' },
+      { ar: 'محترم', ro: 'muḥtaram', es: 'respetuoso' },
+      { ar: 'مهذب', ro: 'muhadhdhab', es: 'educado' },
+      { ar: 'فضولي', ro: 'fuḍūlī', es: 'curioso' },
+      { ar: 'ثرثار', ro: 'tharthār', es: 'parlanchín' },
+      { ar: 'خجول', ro: 'khajūl', es: 'tímido' },
+      { ar: 'اجتماعي', ro: 'ijtimāʿī', es: 'sociable' },
+      { ar: 'وحيد', ro: 'waḥīd', es: 'solitario' },
+      { ar: 'متواضع', ro: 'mutawāḍiʿ', es: 'humilde' },
+      { ar: 'متكبر', ro: 'mutakabbir', es: 'arrogante' },
+      { ar: 'حساس', ro: 'ḥassās', es: 'sensible' },
+      { ar: 'حنون', ro: 'ḥanūn', es: 'cariñoso' },
+      { ar: 'رومانسي', ro: 'rūmānsī', es: 'romántico' },
+      { ar: 'واقعي', ro: 'wāqiʿī', es: 'realista' },
+      { ar: 'خيالي', ro: 'khayālī', es: 'imaginario' },
+      { ar: 'متوازن', ro: 'mutawāzin', es: 'equilibrado' },
+      { ar: 'مرن', ro: 'marin', es: 'flexible' },
+      { ar: 'صلب', ro: 'ṣulb', es: 'rígido' },
+      { ar: 'متحمس', ro: 'mutaḥammis', es: 'entusiasmado' },
+      { ar: 'بارد المشاعر', ro: 'bārid al-mashāʿir', es: 'frío emocionalmente' },
+      { ar: 'دافئ القلب', ro: 'dāfiʾ al-qalb', es: 'cálido emocionalmente' },
+      { ar: 'مليء بالحياة', ro: 'malīʾ bil-ḥayāh', es: 'lleno de vida' },
+      { ar: 'كئيب', ro: 'kaʾīb', es: 'deprimente' },
+      { ar: 'باهظ', ro: 'bāhiẓ', es: 'muy caro' },
+      { ar: 'اقتصادي', ro: 'iqtiṣādī', es: 'económico' },
+      { ar: 'متين', ro: 'matīn', es: 'resistente' },
+      { ar: 'هش', ro: 'hashsh', es: 'frágil' },
+      { ar: 'نادر', ro: 'nādir', es: 'raro, escaso' },
+      { ar: 'شائع', ro: 'shāʾiʿ', es: 'común' },
+      { ar: 'غير رسمي', ro: 'ghayr rasmī', es: 'informal' },
+    ];
+
+    let cards = [...data];
+    let current = 0;
+    let randomMode = false;
+
+    const card      = document.getElementById('card');
+    const frontEl   = document.getElementById('front');
+    const backEl    = document.getElementById('back');
+    const randomBtn = document.getElementById('randomBtn');
+
+    function renderCard() {
+      const c = cards[current];
+      card.classList.remove('flipped');
+
+      frontEl.innerHTML = `
+        <div class="arabic-word">${c.ar}</div>
+        <div class="hint">toca para ver la traducción</div>
+      `;
+
+      backEl.innerHTML = `
+        <div class="arabic-back">${c.ar}</div>
+        <div class="roman">${c.ro}</div>
+        <div class="meaning-es">${c.es}</div>
+      `;
+    }
+
+    function flipCard() { card.classList.toggle('flipped'); }
+
+    function nextCard() {
+      current = randomMode
+        ? Math.floor(Math.random() * cards.length)
+        : (current + 1) % cards.length;
+      renderCard();
+    }
+
+    function prevCard() {
+      current = randomMode
+        ? Math.floor(Math.random() * cards.length)
+        : (current - 1 + cards.length) % cards.length;
+      renderCard();
+    }
+
+    function toggleRandom() {
+      randomMode = !randomMode;
+      randomBtn.textContent = `🔀 Aleatorio: ${randomMode ? 'SÍ' : 'NO'}`;
+      randomBtn.classList.toggle('active', randomMode);
+    }
+
+    function shuffleCards() {
+      for (let i = cards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cards[i], cards[j]] = [cards[j], cards[i]];
+      }
+      current = 0;
+      renderCard();
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space') { e.preventDefault(); flipCard(); }
+      if (e.key === 'ArrowRight') nextCard();
+      if (e.key === 'ArrowLeft') prevCard();
+    });
+
+    renderCard();
+  </script>
+
+</body>
+</html>
